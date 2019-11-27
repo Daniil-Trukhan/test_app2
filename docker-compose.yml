@@ -1,0 +1,43 @@
+version: '3.7'
+services:
+    nginx:
+        build:
+            context: ./docker/nginx
+        volumes:
+            - ./app:/var/www/app
+            - ./docker/logs/nginx:/var/log/nginx
+        depends_on:
+            - php-fpm
+        ports:
+            - "80:80"
+    php-fpm:
+        build:
+            context: ./docker/php
+        links:
+            - db
+        volumes:
+            - ./app:/var/www/app
+            - composer:/root/.composer/cache
+        environment:
+            PHP_IDE_CONFIG: "serverName=Docker"
+    db:
+        image: mysql:5.7
+        command: ["--explicit_defaults_for_timestamp"]
+        ports:
+            - "3306:3306"
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            ALLOW_LOCAL_INFILE: 1
+        volumes:
+            - ./docker/mysql/:/var/lib/mysql
+    myadmin:
+        image: phpmyadmin/phpmyadmin
+        links:
+            - db
+        ports:
+            - "8080:80"
+        volumes:
+            - ./app:/var/www/app
+            - ./docker/myadmin/uploads.ini:/usr/local/etc/php/conf.d/uploads.ini
+volumes:
+    composer:
